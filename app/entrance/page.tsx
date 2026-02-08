@@ -147,39 +147,147 @@ export default function EntrancePage() {
               transition={{ duration: 0.8 }}
               className="space-y-8"
             >
-              {/* Letter */}
+              {/* Letter with enhanced design */}
               <motion.div
-                className="bg-cream/90 backdrop-blur-sm p-12 rounded-lg shadow-2xl border border-deep-rose/10 max-w-xl mx-auto"
-                initial={{ rotateY: 90 }}
-                animate={{ rotateY: 0 }}
-                transition={{ duration: 0.8 }}
+                className="relative bg-cream/95 backdrop-blur-sm p-16 rounded-2xl shadow-2xl border border-deep-rose/10 max-w-2xl mx-auto overflow-hidden"
+                initial={{ rotateY: 90, scale: 0.8 }}
+                animate={{ rotateY: 0, scale: 1 }}
+                transition={{ duration: 1, type: "spring", stiffness: 100 }}
               >
+                {/* Decorative corner flourishes */}
+                <div className="absolute top-4 left-4 text-deep-rose/10 text-4xl">❀</div>
+                <div className="absolute top-4 right-4 text-deep-rose/10 text-4xl">❀</div>
+                <div className="absolute bottom-4 left-4 text-deep-rose/10 text-4xl">❀</div>
+                <div className="absolute bottom-4 right-4 text-deep-rose/10 text-4xl">❀</div>
+
+                {/* Subtle gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-soft-rose/5 via-transparent to-warm-gold/5 pointer-events-none" />
+
                 {showMessage && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ duration: 1 }}
-                    className="space-y-6"
+                    transition={{ duration: 1.5 }}
+                    className="relative z-10 space-y-8"
                   >
-                    <p className="font-serif text-2xl text-deep-rose leading-relaxed">
-                      Hi {userNickname || 'there'},
-                    </p>
-                    <p className="font-serif text-lg text-deep-rose/80 leading-relaxed">
-                      this is not a website.
-                    </p>
-                    <p className="font-serif text-lg text-deep-rose/80 leading-relaxed">
-                      It's just a few feelings I didn't know how to send.
-                    </p>
-                    
-                    <motion.button
-                      onClick={handleContinue}
-                      className="mt-8 text-deep-rose/60 hover:text-deep-rose font-sans text-sm underline underline-offset-4 transition-colors"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    {/* Greeting with gentle fade-in */}
+                    <motion.p
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.8 }}
+                      className="font-serif text-3xl text-deep-rose leading-relaxed"
                     >
-                      open it
-                    </motion.button>
+                      Hi {userNickname || 'there'},
+                    </motion.p>
+
+                    {/* First line with staggered animation */}
+                    <motion.p
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6, duration: 0.8 }}
+                      className="font-serif text-xl text-deep-rose/80 leading-relaxed"
+                    >
+                      this is not a website.
+                    </motion.p>
+
+                    {/* Second line with staggered animation */}
+                    <motion.p
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.9, duration: 0.8 }}
+                      className="font-serif text-xl text-deep-rose/80 leading-relaxed"
+                    >
+                      It's just a few feelings I didn't know how to send.
+                    </motion.p>
+
+                    {/* Decorative divider */}
+                    <motion.div
+                      initial={{ scaleX: 0, opacity: 0 }}
+                      animate={{ scaleX: 1, opacity: 1 }}
+                      transition={{ delay: 1.2, duration: 0.8 }}
+                      className="w-32 h-px bg-gradient-to-r from-transparent via-deep-rose/30 to-transparent mx-auto my-8"
+                    />
+
+                    {/* Button with enhanced hover effects */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.5, duration: 0.8 }}
+                      className="text-center pt-4"
+                    >
+                      <motion.button
+                        onClick={handleContinue}
+                        className="relative group px-10 py-4 bg-gradient-to-r from-deep-rose to-soft-rose text-white rounded-full font-sans text-base shadow-lg overflow-hidden"
+                        whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(224, 90, 106, 0.3)" }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {/* Shimmer effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                          initial={{ x: "-100%" }}
+                          animate={{ x: "200%" }}
+                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                        />
+                        
+                        <span className="relative z-10 flex items-center gap-2">
+                          open it
+                          <motion.span
+                            animate={{ x: [0, 5, 0] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                          >
+                            →
+                          </motion.span>
+                        </span>
+                      </motion.button>
+
+                      {/* Subtle hint text */}
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 2, duration: 1 }}
+                        className="text-xs text-deep-rose/40 font-sans mt-4"
+                      >
+                        something special is waiting for you
+                      </motion.p>
+                    </motion.div>
                   </motion.div>
+                )}
+
+                {/* Floating sparkles */}
+                {showMessage && (
+                  <>
+                    {[...Array(6)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute text-deep-rose/20 text-sm"
+                        initial={{ 
+                          x: Math.random() * 100 - 50,
+                          y: Math.random() * 100 - 50,
+                          opacity: 0,
+                          scale: 0
+                        }}
+                        animate={{ 
+                          x: Math.random() * 200 - 100,
+                          y: Math.random() * 200 - 100,
+                          opacity: [0, 1, 0],
+                          scale: [0, 1, 0],
+                          rotate: 360
+                        }}
+                        transition={{ 
+                          duration: 3,
+                          delay: 1.5 + i * 0.2,
+                          repeat: Infinity,
+                          repeatDelay: 2
+                        }}
+                        style={{
+                          left: `${20 + Math.random() * 60}%`,
+                          top: `${20 + Math.random() * 60}%`
+                        }}
+                      >
+                        ✨
+                      </motion.div>
+                    ))}
+                  </>
                 )}
               </motion.div>
             </motion.div>

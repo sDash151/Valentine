@@ -1,17 +1,29 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 export default function MemoryLanePage() {
   const [memories, setMemories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [direction, setDirection] = useState(0);
 
   useEffect(() => {
     loadMemories();
   }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') nextPage();
+      if (e.key === 'ArrowLeft') prevPage();
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentPage, memories.length]);
 
   const loadMemories = async () => {
     try {
@@ -25,6 +37,25 @@ export default function MemoryLanePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const nextPage = () => {
+    if (currentPage < memories.length - 1) {
+      setDirection(1);
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 0) {
+      setDirection(-1);
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToPage = (index: number) => {
+    setDirection(index > currentPage ? 1 : -1);
+    setCurrentPage(index);
   };
   if (loading) {
     return (
@@ -54,138 +85,244 @@ export default function MemoryLanePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream via-soft-rose/10 to-warm-gold/20 py-12 px-6">
+    <div className="h-screen w-screen bg-gradient-to-br from-cream via-soft-rose/10 to-warm-gold/20 flex items-center justify-center p-4 md:p-6 overflow-hidden fixed inset-0">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-16"
+        className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 text-center z-20"
       >
-        <h1 className="font-script text-6xl md:text-7xl text-deep-rose mb-4">
-          Our Memory Lane
+        <h1 className="font-script text-3xl md:text-4xl text-deep-rose mb-1">
+          Our Memory Album
         </h1>
-        <p className="font-sans text-deep-rose/60 text-sm">
-          scroll slowly
+        <p className="font-sans text-deep-rose/60 text-xs">
+          {currentPage + 1} of {memories.length}
         </p>
       </motion.div>
 
-      {/* Scrapbook Layout */}
-      <div className="max-w-4xl mx-auto space-y-20 pb-32">
-        {memories.map((memory, index) => (
-          <motion.div
-            key={memory.id}
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ 
-              duration: 0.8, 
-              delay: index * 0.15,
-              ease: [0.25, 0.46, 0.45, 0.94]
-            }}
-            className={`
-              flex flex-col items-center
-              ${memory.position === 'left' && 'md:items-start'}
-              ${memory.position === 'right' && 'md:items-end'}
-              ${memory.position === 'center' && 'md:items-center'}
-            `}
-          >
-            {/* Polaroid Photo */}
+      {/* Photo Album Stack */}
+      <div className="relative w-full max-w-lg md:max-w-xl lg:max-w-2xl h-[70vh] md:h-[75vh]">
+        {/* Stack of photos behind - only show if there are more photos ahead */}
+        {currentPage < memories.length - 1 && memories.map((memory, index) => {
+          if (index <= currentPage) return null;
+          
+          const offset = Math.min(index - currentPage, 3);
+          
+          return (
             <motion.div
-              className="relative bg-white p-4 pb-16 shadow-2xl hover:shadow-3xl transition-shadow duration-300"
+              key={memory.id}
+              className="absolute inset-0 bg-white rounded-2xl shadow-2xl pointer-events-none"
               style={{
-                rotate: memory.rotation || 0,
+                zIndex: memories.length - index
               }}
-              whileHover={{ 
-                scale: 1.05, 
-                rotate: 0,
-                transition: { duration: 0.3 }
+              initial={false}
+              animate={{
+                scale: 1 - (offset * 0.03),
+                y: offset * 8,
+                opacity: 1 - (offset * 0.15)
+              }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            />
+          );
+        })}
+
+        {/* Current Photo with Page Turn Animation */}
+        <AnimatePresence mode="wait" custom={direction}>
+          {memories[currentPage] && (
+            <motion.div
+              key={currentPage}
+              custom={direction}
+              initial={{
+                rotateY: direction > 0 ? -90 : 90,
+                opacity: 0,
+                scale: 0.8
+              }}
+              animate={{
+                rotateY: 0,
+                opacity: 1,
+                scale: 1,
+                transition: {
+                  duration: 0.6,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }
+              }}
+              exit={{
+                rotateY: direction > 0 ? 90 : -90,
+                opacity: 0,
+                scale: 0.8,
+                transition: { duration: 0.4 }
+              }}
+              className="absolute inset-0 bg-white rounded-2xl shadow-2xl p-6 md:p-8 lg:p-10"
+              style={{
+                zIndex: memories.length + 1,
+                transformStyle: 'preserve-3d',
+                backfaceVisibility: 'hidden',
+                background: 'linear-gradient(135deg, #ffffff 0%, #fef8f4 100%)'
               }}
             >
-              {/* Tape Effect */}
-              <div 
-                className="absolute -top-4 left-1/2 w-20 h-8 bg-warm-gold/30 backdrop-blur-sm border-l border-r border-warm-gold/40" 
-                style={{ 
-                  transform: `translateX(-50%) rotate(${(memory.rotation || 0) * -0.5}deg)`,
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }} 
+              {/* Decorative corner flourishes */}
+              <div className="absolute top-3 left-3 text-deep-rose/10 text-2xl md:text-3xl">❀</div>
+              <div className="absolute top-3 right-3 text-deep-rose/10 text-2xl md:text-3xl">❀</div>
+              <div className="absolute bottom-3 left-3 text-warm-gold/10 text-2xl md:text-3xl">✿</div>
+              <div className="absolute bottom-3 right-3 text-warm-gold/10 text-2xl md:text-3xl">✿</div>
+
+              {/* Tape effect on top */}
+              <div className="absolute -top-3 left-1/4 w-16 md:w-20 h-6 md:h-8 bg-warm-gold/20 backdrop-blur-sm border-l border-r border-warm-gold/30 shadow-sm" 
+                style={{ transform: 'rotate(-5deg)' }} 
               />
-              
-              {/* Photo */}
-              <div className="w-80 h-80 bg-gradient-to-br from-soft-rose/20 to-deep-rose/20 relative overflow-hidden">
-                {memory.photo_url ? (
-                  <img
-                    src={memory.photo_url}
-                    alt={memory.caption}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-deep-rose/30 font-script text-2xl">
-                    [Photo {index + 1}]
+              <div className="absolute -top-3 right-1/4 w-16 md:w-20 h-6 md:h-8 bg-warm-gold/20 backdrop-blur-sm border-l border-r border-warm-gold/30 shadow-sm" 
+                style={{ transform: 'rotate(5deg)' }} 
+              />
+
+              {/* Subtle pattern overlay */}
+              <div className="absolute inset-0 opacity-5 pointer-events-none rounded-2xl" 
+                style={{
+                  backgroundImage: 'radial-gradient(circle, #E05A6A 1px, transparent 1px)',
+                  backgroundSize: '20px 20px'
+                }}
+              />
+
+              {/* Polaroid Style Photo */}
+              <div className="h-full flex flex-col relative z-10">
+                {/* Photo with decorative border */}
+                <div className="flex-1 bg-gradient-to-br from-soft-rose/10 to-deep-rose/10 relative overflow-hidden rounded-lg mb-4 md:mb-6 flex items-center justify-center border-4 border-white shadow-inner">
+                  {memories[currentPage].photo_url ? (
+                    <img
+                      src={memories[currentPage].photo_url}
+                      alt={memories[currentPage].caption}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-deep-rose/30 font-script text-2xl">
+                      [Photo {currentPage + 1}]
+                    </div>
+                  )}
+                  
+                  {/* Vintage overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+                  
+                  {/* Photo corner decorations */}
+                  <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-deep-rose/20" />
+                  <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-deep-rose/20" />
+                  <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-deep-rose/20" />
+                  <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-deep-rose/20" />
+                </div>
+
+                {/* Decorative divider */}
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-deep-rose/20 to-transparent mb-3 md:mb-4" />
+
+                {/* Caption Area with enhanced styling */}
+                <div className="space-y-2 md:space-y-3 relative">
+                  {/* Small decorative element */}
+                  <div className="absolute -left-4 top-0 text-deep-rose/20 text-xl">♥</div>
+                  
+                  <p className="font-script text-base md:text-lg text-deep-rose/60 italic">
+                    {memories[currentPage].date}
+                  </p>
+                  <p className="font-sans text-sm md:text-base lg:text-lg text-deep-rose leading-relaxed line-clamp-3">
+                    {memories[currentPage].caption}
+                  </p>
+                </div>
+
+                {/* Large decorative heart with shadow */}
+                <div className="absolute bottom-6 md:bottom-8 right-6 md:right-8 pointer-events-none">
+                  <div className="relative">
+                    <div className="absolute inset-0 text-deep-rose/5 text-4xl md:text-5xl lg:text-6xl font-script blur-sm">
+                      ♥
+                    </div>
+                    <div className="relative text-deep-rose/10 text-4xl md:text-5xl lg:text-6xl font-script">
+                      ♥
+                    </div>
                   </div>
-                )}
-              </div>
-
-              {/* Caption */}
-              <div className="mt-4 space-y-2">
-                <p className="font-script text-sm text-deep-rose/60">{memory.date}</p>
-                <p className="font-sans text-deep-rose leading-relaxed">
-                  {memory.caption}
-                </p>
-              </div>
-
-              {/* Handwritten heart */}
-              <div className="absolute bottom-4 right-4 text-deep-rose/20 text-6xl font-script">
-                ♥
+                </div>
               </div>
             </motion.div>
-          </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Navigation Arrows */}
+      <div className="absolute left-2 md:left-4 lg:left-8 top-1/2 -translate-y-1/2 z-30">
+        <motion.button
+          onClick={prevPage}
+          disabled={currentPage === 0}
+          whileHover={{ scale: 1.1, x: -5 }}
+          whileTap={{ scale: 0.9 }}
+          className={`
+            w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg flex items-center justify-center transition-all
+            ${currentPage === 0
+              ? 'bg-deep-rose/20 text-deep-rose/30 cursor-not-allowed'
+              : 'bg-white/90 backdrop-blur-sm text-deep-rose hover:bg-deep-rose hover:text-white'
+            }
+          `}
+        >
+          <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </motion.button>
+      </div>
+
+      <div className="absolute right-2 md:right-4 lg:right-8 top-1/2 -translate-y-1/2 z-30">
+        <motion.button
+          onClick={nextPage}
+          disabled={currentPage === memories.length - 1}
+          whileHover={{ scale: 1.1, x: 5 }}
+          whileTap={{ scale: 0.9 }}
+          className={`
+            w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg flex items-center justify-center transition-all
+            ${currentPage === memories.length - 1
+              ? 'bg-deep-rose/20 text-deep-rose/30 cursor-not-allowed'
+              : 'bg-white/90 backdrop-blur-sm text-deep-rose hover:bg-deep-rose hover:text-white'
+            }
+          `}
+        >
+          <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </motion.button>
+      </div>
+
+      {/* Page Dots Indicator */}
+      <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+        {memories.map((_, index) => (
+          <motion.button
+            key={index}
+            onClick={() => goToPage(index)}
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
+            className={`
+              w-2 h-2 rounded-full transition-all duration-300
+              ${index === currentPage
+                ? 'bg-deep-rose w-6 md:w-8'
+                : 'bg-deep-rose/30 hover:bg-deep-rose/50'
+              }
+            `}
+          />
         ))}
       </div>
 
-      {/* Decorative Elements */}
-      <div className="fixed top-20 right-10 text-deep-rose/10 text-8xl pointer-events-none">
-        ♥
-      </div>
-      <div className="fixed bottom-20 left-10 text-warm-gold/10 text-6xl pointer-events-none">
-        ✨
-      </div>
-
       {/* Back Button */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2">
+      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-20">
         <Link href="/home">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-3 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-deep-rose/20 font-sans text-sm text-deep-rose hover:bg-deep-rose hover:text-white transition-colors"
+            className="px-6 md:px-8 py-2 md:py-3 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-deep-rose/20 font-sans text-xs md:text-sm text-deep-rose hover:bg-deep-rose hover:text-white transition-colors"
           >
             ← Back to Home
           </motion.button>
         </Link>
       </div>
 
-      {/* Music Toggle */}
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => setMusicPlaying(!musicPlaying)}
-        className={`
-          fixed top-8 right-8 w-12 h-12 rounded-full shadow-lg border flex items-center justify-center transition-all duration-300
-          ${musicPlaying 
-            ? 'bg-deep-rose text-white border-deep-rose' 
-            : 'bg-white/90 backdrop-blur-sm text-deep-rose border-deep-rose/20 hover:bg-deep-rose hover:text-white'
-          }
-        `}
+      {/* Keyboard Navigation Hint */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        className="absolute bottom-16 md:bottom-20 right-4 md:right-8 text-xs text-deep-rose/40 font-sans hidden lg:block"
       >
-        {musicPlaying ? (
-          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-        ) : (
-          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-          </svg>
-        )}
-      </motion.button>
+        Use ← → keys to navigate
+      </motion.div>
     </div>
   );
 }

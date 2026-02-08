@@ -45,6 +45,8 @@ export default function SurprisePage() {
         .then(data => {
           if (data.success && data.data) {
             setSurprise(data.data);
+            // Mark as viewed in localStorage
+            localStorage.setItem(`viewed_${surpriseId}`, 'true');
           }
           setLoading(false);
         })
