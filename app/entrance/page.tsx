@@ -16,7 +16,7 @@ export default function EntrancePage() {
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data) {
-          setUserNickname(data.data.user_nickname || 'You');
+          setUserNickname(data.data.her_nickname || 'You');
         }
       })
       .catch(() => setUserNickname('You'));
