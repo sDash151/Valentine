@@ -13,9 +13,12 @@ export default function EditSurprisePage() {
   // Handle params (which might be async in Next.js 15)
   useEffect(() => {
     const getId = async () => {
-      const id = typeof params.id === 'string' ? params.id : await params.id;
-      setSurpriseId(id);
-      setIsNew(id === 'new');
+      const rawId = typeof params.id === 'string' ? params.id : await params.id;
+      const id = Array.isArray(rawId) ? rawId[0] : rawId;
+      if (id) {
+        setSurpriseId(id);
+        setIsNew(id === 'new');
+      }
     };
     getId();
   }, [params]);

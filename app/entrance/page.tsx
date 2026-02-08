@@ -27,8 +27,8 @@ export default function EntrancePage() {
             key={i}
             className="absolute text-deep-rose/10 text-2xl"
             initial={{ 
-              x: Math.random() * window.innerWidth, 
-              y: window.innerHeight + 50,
+              x: typeof window !== 'undefined' ? Math.random() * window.innerWidth : Math.random() * 1000, 
+              y: typeof window !== 'undefined' ? window.innerHeight + 50 : 1000,
               rotate: Math.random() * 360
             }}
             animate={{ 
