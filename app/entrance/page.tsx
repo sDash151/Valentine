@@ -1,13 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
 export default function EntrancePage() {
   const [isOpened, setIsOpened] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
+  const [userNickname, setUserNickname] = useState('');
   const router = useRouter();
+
+  // Fetch user nickname from settings
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          setUserNickname(data.data.user_nickname || 'You');
+        }
+      })
+      .catch(() => setUserNickname('You'));
+  }, []);
 
   const handleEnvelopeClick = () => {
     setIsOpened(true);
@@ -110,7 +123,7 @@ export default function EntrancePage() {
                 className="space-y-2"
               >
                 <p className="font-script text-3xl text-deep-rose">
-                  For [Her Name]
+                  For {userNickname || 'You'}
                 </p>
                 <p className="text-sm text-deep-rose/60 font-sans">
                   from someone who thinks about you too much
@@ -149,7 +162,7 @@ export default function EntrancePage() {
                     className="space-y-6"
                   >
                     <p className="font-serif text-2xl text-deep-rose leading-relaxed">
-                      Hi [Her Name],
+                      Hi {userNickname || 'there'},
                     </p>
                     <p className="font-serif text-lg text-deep-rose/80 leading-relaxed">
                       this is not a website.
