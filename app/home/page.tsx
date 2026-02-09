@@ -3,13 +3,23 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
+  const router = useRouter();
   const [surprises, setSurprises] = useState<any[]>([]);
   const [settings, setSettings] = useState({ her_nickname: 'love' });
   const [loading, setLoading] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState('');
   const [viewedCount, setViewedCount] = useState(0);
+
+  // Check authentication
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+    if (!isAuthenticated) {
+      router.push('/entrance');
+    }
+  }, [router]);
 
   useEffect(() => {
     loadData();
@@ -300,7 +310,7 @@ export default function HomePage() {
       </div>
 
       {/* Navigation */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-4">
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-4 z-50">
         <Link href="/memory-lane">
           <motion.button
             whileHover={{ scale: 1.05 }}

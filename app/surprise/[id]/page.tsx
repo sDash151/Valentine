@@ -25,6 +25,14 @@ export default function SurprisePage() {
   const [showHints, setShowHints] = useState<boolean[]>([]);
   const [revealedQuizzes, setRevealedQuizzes] = useState<boolean[]>([]); // Track which quizzes are revealed
 
+  // Check authentication
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+    if (!isAuthenticated) {
+      router.push('/entrance');
+    }
+  }, [router]);
+
   // Handle params (which might be async in Next.js 15)
   useEffect(() => {
     const getId = async () => {

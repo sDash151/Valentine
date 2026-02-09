@@ -3,12 +3,22 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function MemoryLanePage() {
+  const router = useRouter();
   const [memories, setMemories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [direction, setDirection] = useState(0);
+
+  // Check authentication
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+    if (!isAuthenticated) {
+      router.push('/entrance');
+    }
+  }, [router]);
 
   useEffect(() => {
     loadMemories();
@@ -90,7 +100,7 @@ export default function MemoryLanePage() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 text-center z-20"
+        className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 text-center z-50"
       >
         <h1 className="font-script text-3xl md:text-4xl text-deep-rose mb-1">
           Our Memory Album
@@ -154,7 +164,7 @@ export default function MemoryLanePage() {
               }}
               className="absolute inset-0 bg-white rounded-2xl shadow-2xl p-6 md:p-8 lg:p-10"
               style={{
-                zIndex: memories.length + 1,
+                zIndex: 10,
                 transformStyle: 'preserve-3d',
                 backfaceVisibility: 'hidden',
                 background: 'linear-gradient(135deg, #ffffff 0%, #fef8f4 100%)'
@@ -242,7 +252,7 @@ export default function MemoryLanePage() {
       </div>
 
       {/* Navigation Arrows */}
-      <div className="absolute left-2 md:left-4 lg:left-8 top-1/2 -translate-y-1/2 z-30">
+      <div className="absolute left-2 md:left-4 lg:left-8 top-1/2 -translate-y-1/2 z-50">
         <motion.button
           onClick={prevPage}
           disabled={currentPage === 0}
@@ -262,7 +272,7 @@ export default function MemoryLanePage() {
         </motion.button>
       </div>
 
-      <div className="absolute right-2 md:right-4 lg:right-8 top-1/2 -translate-y-1/2 z-30">
+      <div className="absolute right-2 md:right-4 lg:right-8 top-1/2 -translate-y-1/2 z-50">
         <motion.button
           onClick={nextPage}
           disabled={currentPage === memories.length - 1}
@@ -283,7 +293,7 @@ export default function MemoryLanePage() {
       </div>
 
       {/* Page Dots Indicator */}
-      <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+      <div className="absolute bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 flex gap-2 z-50">
         {memories.map((_, index) => (
           <motion.button
             key={index}
@@ -302,7 +312,7 @@ export default function MemoryLanePage() {
       </div>
 
       {/* Back Button */}
-      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-20">
+      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-50">
         <Link href="/home">
           <motion.button
             whileHover={{ scale: 1.05 }}

@@ -13,6 +13,7 @@ export default function AdminDashboard() {
     her_nickname: '',
     your_signature: '',
     site_password: '',
+    password_hint: '',
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
           her_nickname: settingsData.data.her_nickname || '',
           your_signature: settingsData.data.your_signature || '',
           site_password: settingsData.data.site_password || '',
+          password_hint: settingsData.data.password_hint || '',
         });
       }
     } catch (error) {
@@ -304,6 +306,19 @@ export default function AdminDashboard() {
                   />
                   <p className="text-xs text-deep-rose/40 mt-1">
                     She'll need this password to access the site
+                  </p>
+                </div>
+                <div>
+                  <label className="block font-sans text-sm text-deep-rose/60 mb-2">Password Hint</label>
+                  <input
+                    type="text"
+                    value={settings.password_hint}
+                    onChange={(e) => setSettings({ ...settings, password_hint: e.target.value })}
+                    placeholder="A sweet hint to help her remember (e.g., 'Our special date 💕')"
+                    className="w-full px-4 py-2 rounded-lg border border-deep-rose/20 focus:border-deep-rose focus:outline-none font-sans"
+                  />
+                  <p className="text-xs text-deep-rose/40 mt-1">
+                    This hint will appear if she needs help with the password
                   </p>
                 </div>
               </div>

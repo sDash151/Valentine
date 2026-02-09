@@ -33,7 +33,8 @@ CREATE POLICY "Admins can update settings"
 INSERT INTO settings (key, value) VALUES
   ('her_nickname', 'pavithra'),
   ('your_signature', 'Your person'),
-  ('site_password', 'bubu13032026')
+  ('site_password', 'bubu13032026'),
+  ('password_hint', 'Our special date 💕')
 ON CONFLICT (key) DO NOTHING;
 
 -- Trigger for updated_at

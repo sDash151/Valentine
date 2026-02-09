@@ -8,15 +8,23 @@ export default function EntrancePage() {
   const [isOpened, setIsOpened] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const [userNickname, setUserNickname] = useState('');
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [sitePassword, setSitePassword] = useState('');
+  const [passwordHint, setPasswordHint] = useState('');
+  const [showHint, setShowHint] = useState(false);
   const router = useRouter();
 
-  // Fetch user nickname from settings
+  // Fetch user nickname and site password from settings
   useEffect(() => {
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data) {
           setUserNickname(data.data.her_nickname || 'You');
+          setSitePassword(data.data.site_password || '');
+          setPasswordHint(data.data.password_hint || '');
         }
       })
       .catch(() => setUserNickname('You'));
@@ -28,7 +36,20 @@ export default function EntrancePage() {
   };
 
   const handleContinue = () => {
-    router.push('/home');
+    setShowPasswordPrompt(true);
+  };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password === sitePassword) {
+      // Store authentication in localStorage
+      localStorage.setItem('authenticated', 'true');
+      router.push('/home');
+    } else {
+      setPasswordError('Incorrect password. Try again! 💕');
+      setPassword('');
+    }
   };
 
   return (
@@ -163,7 +184,7 @@ export default function EntrancePage() {
                 {/* Subtle gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-soft-rose/5 via-transparent to-warm-gold/5 pointer-events-none" />
 
-                {showMessage && (
+                {showMessage && !showPasswordPrompt && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -250,6 +271,99 @@ export default function EntrancePage() {
                         something special is waiting for you
                       </motion.p>
                     </motion.div>
+                  </motion.div>
+                )}
+
+                {/* Password Prompt */}
+                {showPasswordPrompt && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative z-10 space-y-6"
+                  >
+                    <motion.p
+                      className="font-serif text-2xl text-deep-rose text-center"
+                    >
+                      One last thing...
+                    </motion.p>
+
+                    <motion.p
+                      className="font-sans text-base text-deep-rose/70 text-center"
+                    >
+                      Enter the password to continue 🔐
+                    </motion.p>
+
+                    <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                      <div>
+                        <input
+                          type="password"
+                          value={password}
+                          onChange={(e) => {
+                            setPassword(e.target.value);
+                            setPasswordError('');
+                          }}
+                          placeholder="Enter password..."
+                          className="w-full px-6 py-3 rounded-full border-2 border-deep-rose/20 focus:border-deep-rose focus:outline-none font-sans text-center bg-white"
+                          autoFocus
+                        />
+                        {passwordError && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-sm text-deep-rose/60 text-center mt-2"
+                          >
+                            {passwordError}
+                          </motion.p>
+                        )}
+                        
+                        {/* Hint Section */}
+                        {passwordHint && (
+                          <div className="mt-4 text-center">
+                            {!showHint ? (
+                              <motion.button
+                                type="button"
+                                onClick={() => setShowHint(true)}
+                                className="text-xs text-deep-rose/50 hover:text-deep-rose underline font-sans"
+                                whileHover={{ scale: 1.05 }}
+                              >
+                                Need a hint? 💭
+                              </motion.button>
+                            ) : (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="p-3 bg-warm-gold/10 rounded-lg border border-warm-gold/30"
+                              >
+                                <p className="text-sm text-deep-rose/70 font-sans">
+                                  💡 {passwordHint}
+                                </p>
+                              </motion.div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <motion.button
+                        type="submit"
+                        className="w-full px-10 py-4 bg-gradient-to-r from-deep-rose to-soft-rose text-white rounded-full font-sans text-base shadow-lg"
+                        whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(224, 90, 106, 0.3)" }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Continue →
+                      </motion.button>
+                    </form>
+
+                    <motion.button
+                      onClick={() => {
+                        setShowPasswordPrompt(false);
+                        setShowHint(false);
+                        setPasswordError('');
+                      }}
+                      className="text-sm text-deep-rose/50 hover:text-deep-rose underline font-sans mx-auto block"
+                    >
+                      ← Go back
+                    </motion.button>
                   </motion.div>
                 )}
 
