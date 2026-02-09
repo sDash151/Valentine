@@ -18,6 +18,7 @@ export default function SurprisePage() {
   const [surprise, setSurprise] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [surpriseId, setSurpriseId] = useState<string | null>(null);
+  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
 
   // Quiz state
   const [quizAnswers, setQuizAnswers] = useState<string[]>([]);
@@ -68,6 +69,14 @@ export default function SurprisePage() {
       setIsRevealing(false);
       setShowContent(true);
       setShowConfetti(true); // Start confetti and keep it going!
+      
+      // Try to play audio after bloom animation (user has seen the page)
+      if (audioRef) {
+        audioRef.play().catch(err => {
+          console.log('Autoplay prevented by browser:', err);
+          // Browser blocked autoplay - audio will play when user interacts
+        });
+      }
     }, 2000);
 
     // Move confetti to background after 4 seconds
@@ -184,18 +193,37 @@ export default function SurprisePage() {
     );
   }
 
-  // Get photos, videos, audio from media_urls
-  const photos = surprise.media_urls?.filter((url: string) => 
-    url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
-  ) || [];
+  // Get photos, videos, audio from media_captions (more reliable than URL extensions)
+  let photos: string[] = [];
+  let videos: string[] = [];
+  let audio: string[] = [];
   
-  const videos = surprise.media_urls?.filter((url: string) => 
-    url.match(/\.(mp4|mov|avi|webm)$/i)
-  ) || [];
-  
-  const audio = surprise.media_urls?.filter((url: string) => 
-    url.match(/\.(mp3|wav|m4a|ogg)$/i)
-  ) || [];
+  if (surprise.content_payload?.media_captions && Array.isArray(surprise.content_payload.media_captions)) {
+    photos = surprise.content_payload.media_captions
+      .filter((item: any) => item.type === 'photo')
+      .map((item: any) => item.url);
+    
+    videos = surprise.content_payload.media_captions
+      .filter((item: any) => item.type === 'video')
+      .map((item: any) => item.url);
+    
+    audio = surprise.content_payload.media_captions
+      .filter((item: any) => item.type === 'audio')
+      .map((item: any) => item.url);
+  } else {
+    // Fallback: Try to detect by file extension if media_captions not available
+    photos = surprise.media_urls?.filter((url: string) => 
+      url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+    ) || [];
+    
+    videos = surprise.media_urls?.filter((url: string) => 
+      url.match(/\.(mp4|mov|avi|webm)$/i)
+    ) || [];
+    
+    audio = surprise.media_urls?.filter((url: string) => 
+      url.match(/\.(mp3|wav|m4a|ogg)$/i)
+    ) || [];
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cream via-soft-rose/20 to-warm-gold/30 relative overflow-hidden">
@@ -360,10 +388,11 @@ export default function SurprisePage() {
                   <div className="bg-white/90 p-12 rounded-lg shadow-2xl text-center">
                     <div className="text-6xl mb-6">🎤</div>
                     <audio
+                      ref={(el) => setAudioRef(el)}
                       src={audio[0]}
                       controls
                       autoPlay
-                      loop={audio.length === 1}
+                      loop
                       className="w-full max-w-md mx-auto"
                     />
                     {audio.length > 1 && (
@@ -640,10 +669,11 @@ export default function SurprisePage() {
                             Listen to my heart 🎤
                           </p>
                           <audio
+                            ref={(el) => setAudioRef(el)}
                             src={audio[0]}
                             controls
                             autoPlay
-                            loop={audio.length === 1}
+                            loop
                             className="w-full"
                           />
                           {audio.length > 1 && (

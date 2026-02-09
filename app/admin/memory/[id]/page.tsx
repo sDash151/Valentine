@@ -1,12 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 export default function EditMemoryPage() {
   const params = useParams();
   const router = useRouter();
-  const isNew = params.id === 'new';
+  const [memoryId, setMemoryId] = useState<string | null>(null);
+  const [isNew, setIsNew] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  // Handle params (which might be async in Next.js 15)
+  useEffect(() => {
+    const getId = async () => {
+      const rawId = typeof params.id === 'string' ? params.id : await params.id;
+      const id = Array.isArray(rawId) ? rawId[0] : rawId;
+      if (id) {
+        setMemoryId(id);
+        setIsNew(id === 'new');
+      }
+    };
+    getId();
+  }, [params]);
 
   const [formData, setFormData] = useState({
     date: '',
@@ -41,6 +56,43 @@ export default function EditMemoryPage() {
     setModal({ ...modal, show: false });
   };
 
+  // Load existing memory data
+  useEffect(() => {
+    if (memoryId && !isNew) {
+      loadMemoryData();
+    }
+  }, [memoryId, isNew]);
+
+  const loadMemoryData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/memories/${memoryId}`);
+      const data = await res.json();
+      
+      if (data.success && data.data) {
+        const memory = data.data;
+        setFormData({
+          date: memory.date || '',
+          caption: memory.caption || '',
+          rotation: memory.rotation || 0,
+          position: memory.position || 'center',
+        });
+        
+        // Set photo preview from existing URL
+        if (memory.photo_url) {
+          setPhotoPreview(memory.photo_url);
+        }
+      } else {
+        showModal('error', 'Load Failed', data.error || 'Failed to load memory data');
+      }
+    } catch (error: any) {
+      console.error('Error loading memory:', error);
+      showModal('error', 'Error', 'Failed to load memory data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -56,7 +108,8 @@ export default function EditMemoryPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!photoFile) {
+    // For new memories, photo is required. For editing, it's optional (keep existing if not changed)
+    if (isNew && !photoFile) {
       showModal('error', 'Missing Photo', 'Please upload a photo for this memory.');
       return;
     }
@@ -64,62 +117,65 @@ export default function EditMemoryPage() {
     setUploading(true);
     
     try {
-      // Step 1: Upload photo to Cloudinary
-      setUploadProgress('Uploading photo to Cloudinary...');
-      let photoUrl = '';
+      let photoUrl = photoPreview; // Use existing photo URL if not uploading new one
       
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', photoFile);
-      
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        body: uploadFormData,
-      });
-      
-      if (!uploadRes.ok) {
-        const errorText = await uploadRes.text();
-        console.error('Upload failed with status:', uploadRes.status, errorText);
-        showModal('error', 'Upload Failed', `Server returned ${uploadRes.status}: ${errorText}`);
-        setUploading(false);
-        return;
+      // Step 1: Upload photo to Cloudinary (only if new file selected)
+      if (photoFile) {
+        setUploadProgress('Uploading photo to Cloudinary...');
+        
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', photoFile);
+        
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+        
+        if (!uploadRes.ok) {
+          const errorText = await uploadRes.text();
+          console.error('Upload failed with status:', uploadRes.status, errorText);
+          showModal('error', 'Upload Failed', `Server returned ${uploadRes.status}: ${errorText}`);
+          setUploading(false);
+          return;
+        }
+        
+        const uploadData = await uploadRes.json();
+        console.log('Upload response:', uploadData);
+        
+        if (!uploadData.success && !uploadData.url) {
+          showModal('error', 'Upload Failed', uploadData.error || 'Failed to upload photo to Cloudinary');
+          setUploading(false);
+          return;
+        }
+        
+        photoUrl = uploadData.url;
+        console.log('Photo uploaded successfully:', photoUrl);
       }
       
-      const uploadData = await uploadRes.json();
-      console.log('Upload response:', uploadData);
-      console.log('Upload response keys:', Object.keys(uploadData));
-      console.log('Upload success value:', uploadData.success);
-      console.log('Upload URL value:', uploadData.url);
+      // Step 2: Prepare memory data
+      setUploadProgress(isNew ? 'Saving memory to database...' : 'Updating memory...');
       
-      if (!uploadData.success && !uploadData.url) {
-        showModal('error', 'Upload Failed', uploadData.error || 'Failed to upload photo to Cloudinary');
-        setUploading(false);
-        return;
-      }
-      
-      photoUrl = uploadData.url;
-      console.log('Photo uploaded successfully:', photoUrl);
-      
-      // Step 2: Get the next order_index
-      setUploadProgress('Preparing memory data...');
-      const memoriesRes = await fetch('/api/memories');
-      const memoriesData = await memoriesRes.json();
-      const nextOrderIndex = memoriesData.data ? memoriesData.data.length + 1 : 1;
-      
-      // Step 3: Save to Supabase
-      setUploadProgress('Saving memory to database...');
-      const memoryData = {
+      const memoryData: any = {
         date: formData.date,
         photo_url: photoUrl,
         caption: formData.caption,
         rotation: formData.rotation,
         position: formData.position,
-        order_index: nextOrderIndex,
       };
+      
+      // For new memories, get the next order_index
+      if (isNew) {
+        const memoriesRes = await fetch('/api/memories');
+        const memoriesData = await memoriesRes.json();
+        const nextOrderIndex = memoriesData.data ? memoriesData.data.length + 1 : 1;
+        memoryData.order_index = nextOrderIndex;
+      }
       
       console.log('Saving memory data:', memoryData);
       
-      const saveRes = await fetch('/api/memories', {
-        method: 'POST',
+      // Step 3: Save to Supabase
+      const saveRes = await fetch(isNew ? '/api/memories' : `/api/memories/${memoryId}`, {
+        method: isNew ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(memoryData),
       });
@@ -128,7 +184,8 @@ export default function EditMemoryPage() {
       console.log('Save response:', saveData);
       
       if (saveData.success) {
-        showModal('success', 'Memory Saved! ✨', 'Your memory has been added successfully!');
+        showModal('success', isNew ? 'Memory Saved! ✨' : 'Memory Updated! ✨', 
+          isNew ? 'Your memory has been added successfully!' : 'Your memory has been updated successfully!');
         setTimeout(() => {
           router.push('/admin');
         }, 2000);
@@ -159,7 +216,13 @@ export default function EditMemoryPage() {
           </h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {loading ? (
+          <div className="bg-white/90 backdrop-blur-sm p-12 rounded-xl border border-deep-rose/10 text-center">
+            <div className="text-6xl mb-4 animate-pulse">💝</div>
+            <p className="font-sans text-deep-rose/60">Loading memory...</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
           {/* Photo Upload */}
           <div className="bg-white/90 backdrop-blur-sm p-8 rounded-xl border border-deep-rose/10">
             <h2 className="font-serif text-2xl text-deep-rose mb-6">Photo</h2>
@@ -323,6 +386,7 @@ export default function EditMemoryPage() {
             </button>
           </div>
         </form>
+        )}
       </div>
 
       {/* Modal */}
