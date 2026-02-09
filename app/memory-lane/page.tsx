@@ -111,30 +111,33 @@ export default function MemoryLanePage() {
       </motion.div>
 
       {/* Photo Album Stack */}
-      <div className="relative w-full max-w-lg md:max-w-xl lg:max-w-2xl h-[70vh] md:h-[75vh]">
-        {/* Stack of photos behind - only show if there are more photos ahead */}
-        {currentPage < memories.length - 1 && memories.map((memory, index) => {
-          if (index <= currentPage) return null;
-          
-          const offset = Math.min(index - currentPage, 3);
-          
-          return (
-            <motion.div
-              key={memory.id}
-              className="absolute inset-0 bg-white rounded-2xl shadow-2xl pointer-events-none"
-              style={{
-                zIndex: memories.length - index
-              }}
-              initial={false}
-              animate={{
-                scale: 1 - (offset * 0.03),
-                y: offset * 8,
-                opacity: 1 - (offset * 0.15)
-              }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            />
-          );
-        })}
+      <div className="relative w-full max-w-lg md:max-w-md h-[70vh] md:h-[80vh] mx-auto">
+        {/* Stack of photos behind - only show if there are more photos ahead and not animating */}
+        <AnimatePresence>
+          {currentPage < memories.length - 1 && memories.map((memory, index) => {
+            if (index <= currentPage) return null;
+            
+            const offset = Math.min(index - currentPage, 3);
+            
+            return (
+              <motion.div
+                key={memory.id}
+                className="absolute inset-0 bg-white rounded-2xl shadow-2xl pointer-events-none"
+                style={{
+                  zIndex: memories.length - index
+                }}
+                initial={false}
+                animate={{
+                  scale: 1 - (offset * 0.03),
+                  y: offset * 8,
+                  opacity: 1 - (offset * 0.15)
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+              />
+            );
+          })}
+        </AnimatePresence>
 
         {/* Current Photo with Page Turn Animation */}
         <AnimatePresence mode="wait" custom={direction}>
@@ -162,7 +165,7 @@ export default function MemoryLanePage() {
                 scale: 0.8,
                 transition: { duration: 0.4 }
               }}
-              className="absolute inset-0 bg-white rounded-2xl shadow-2xl p-6 md:p-8 lg:p-10"
+              className="absolute inset-0 bg-white rounded-2xl shadow-2xl p-6 md:p-6"
               style={{
                 zIndex: 10,
                 transformStyle: 'preserve-3d',
@@ -171,16 +174,16 @@ export default function MemoryLanePage() {
               }}
             >
               {/* Decorative corner flourishes */}
-              <div className="absolute top-3 left-3 text-deep-rose/10 text-2xl md:text-3xl">❀</div>
-              <div className="absolute top-3 right-3 text-deep-rose/10 text-2xl md:text-3xl">❀</div>
-              <div className="absolute bottom-3 left-3 text-warm-gold/10 text-2xl md:text-3xl">✿</div>
-              <div className="absolute bottom-3 right-3 text-warm-gold/10 text-2xl md:text-3xl">✿</div>
+              <div className="absolute top-3 left-3 text-deep-rose/10 text-2xl md:text-2xl">❀</div>
+              <div className="absolute top-3 right-3 text-deep-rose/10 text-2xl md:text-2xl">❀</div>
+              <div className="absolute bottom-3 left-3 text-warm-gold/10 text-2xl md:text-2xl">✿</div>
+              <div className="absolute bottom-3 right-3 text-warm-gold/10 text-2xl md:text-2xl">✿</div>
 
               {/* Tape effect on top */}
-              <div className="absolute -top-3 left-1/4 w-16 md:w-20 h-6 md:h-8 bg-warm-gold/20 backdrop-blur-sm border-l border-r border-warm-gold/30 shadow-sm" 
+              <div className="absolute -top-3 left-1/4 w-16 md:w-16 h-6 md:h-6 bg-warm-gold/20 backdrop-blur-sm border-l border-r border-warm-gold/30 shadow-sm" 
                 style={{ transform: 'rotate(-5deg)' }} 
               />
-              <div className="absolute -top-3 right-1/4 w-16 md:w-20 h-6 md:h-8 bg-warm-gold/20 backdrop-blur-sm border-l border-r border-warm-gold/30 shadow-sm" 
+              <div className="absolute -top-3 right-1/4 w-16 md:w-16 h-6 md:h-6 bg-warm-gold/20 backdrop-blur-sm border-l border-r border-warm-gold/30 shadow-sm" 
                 style={{ transform: 'rotate(5deg)' }} 
               />
 
@@ -195,7 +198,7 @@ export default function MemoryLanePage() {
               {/* Polaroid Style Photo */}
               <div className="h-full flex flex-col relative z-10">
                 {/* Photo with decorative border */}
-                <div className="flex-1 bg-gradient-to-br from-soft-rose/10 to-deep-rose/10 relative overflow-hidden rounded-lg mb-4 md:mb-6 flex items-center justify-center border-4 border-white shadow-inner">
+                <div className="flex-1 bg-gradient-to-br from-soft-rose/10 to-deep-rose/10 relative overflow-hidden rounded-lg mb-4 md:mb-4 flex items-center justify-center border-4 border-white shadow-inner">
                   {memories[currentPage].photo_url ? (
                     <img
                       src={memories[currentPage].photo_url}
@@ -219,28 +222,28 @@ export default function MemoryLanePage() {
                 </div>
 
                 {/* Decorative divider */}
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-deep-rose/20 to-transparent mb-3 md:mb-4" />
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-deep-rose/20 to-transparent mb-3 md:mb-3" />
 
                 {/* Caption Area with enhanced styling */}
-                <div className="space-y-2 md:space-y-3 relative">
+                <div className="space-y-2 md:space-y-2 relative">
                   {/* Small decorative element */}
                   <div className="absolute -left-4 top-0 text-deep-rose/20 text-xl">♥</div>
                   
-                  <p className="font-script text-base md:text-lg text-deep-rose/60 italic">
+                  <p className="font-script text-base md:text-base text-deep-rose/60 italic">
                     {memories[currentPage].date}
                   </p>
-                  <p className="font-sans text-sm md:text-base lg:text-lg text-deep-rose leading-relaxed line-clamp-3">
+                  <p className="font-sans text-sm md:text-sm text-deep-rose leading-relaxed line-clamp-3 md:line-clamp-2">
                     {memories[currentPage].caption}
                   </p>
                 </div>
 
                 {/* Large decorative heart with shadow */}
-                <div className="absolute bottom-6 md:bottom-8 right-6 md:right-8 pointer-events-none">
+                <div className="absolute bottom-6 md:bottom-6 right-6 md:right-6 pointer-events-none">
                   <div className="relative">
-                    <div className="absolute inset-0 text-deep-rose/5 text-4xl md:text-5xl lg:text-6xl font-script blur-sm">
+                    <div className="absolute inset-0 text-deep-rose/5 text-4xl md:text-4xl font-script blur-sm">
                       ♥
                     </div>
-                    <div className="relative text-deep-rose/10 text-4xl md:text-5xl lg:text-6xl font-script">
+                    <div className="relative text-deep-rose/10 text-4xl md:text-4xl font-script">
                       ♥
                     </div>
                   </div>
