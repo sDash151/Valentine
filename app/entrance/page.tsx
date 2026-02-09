@@ -14,7 +14,35 @@ export default function EntrancePage() {
   const [sitePassword, setSitePassword] = useState('');
   const [passwordHint, setPasswordHint] = useState('');
   const [showHint, setShowHint] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  // Generate random values only on client to avoid hydration mismatch
+  const [heartPositions] = useState(() => 
+    Array.from({ length: 20 }, () => ({
+      x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
+      y: (typeof window !== 'undefined' ? window.innerHeight : 1000) + 50,
+      rotate: Math.random() * 360,
+      duration: Math.random() * 10 + 15,
+      delay: Math.random() * 5,
+      finalRotate: Math.random() * 360 + 360
+    }))
+  );
+
+  const [sparklePositions] = useState(() =>
+    Array.from({ length: 6 }, () => ({
+      initialX: Math.random() * 100 - 50,
+      initialY: Math.random() * 100 - 50,
+      finalX: Math.random() * 200 - 100,
+      finalY: Math.random() * 200 - 100,
+      left: 20 + Math.random() * 60,
+      top: 20 + Math.random() * 60
+    }))
+  );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch user nickname and site password from settings
   useEffect(() => {
@@ -55,30 +83,33 @@ export default function EntrancePage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-soft-rose via-cream to-warm-gold overflow-hidden relative">
       {/* Floating hearts background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute text-deep-rose/10 text-2xl"
-            initial={{ 
-              x: typeof window !== 'undefined' ? Math.random() * window.innerWidth : Math.random() * 1000, 
-              y: typeof window !== 'undefined' ? window.innerHeight + 50 : 1000,
-              rotate: Math.random() * 360
-            }}
-            animate={{ 
-              y: -50,
-              rotate: Math.random() * 360 + 360
-            }}
-            transition={{ 
-              duration: Math.random() * 10 + 15,
-              repeat: Infinity,
-              delay: Math.random() * 5
-            }}
-          >
-            ♥
-          </motion.div>
-        ))}
-      </div>
+      {mounted && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {heartPositions.map((heart, i) => (
+            <motion.div
+              key={i}
+              className="absolute text-deep-rose/10 text-2xl"
+              style={{ left: heart.x }}
+              initial={{ 
+                y: heart.y,
+                rotate: heart.rotate
+              }}
+              animate={{ 
+                y: -50,
+                rotate: heart.finalRotate
+              }}
+              transition={{ 
+                duration: heart.duration,
+                repeat: Infinity,
+                delay: heart.delay,
+                ease: "linear"
+              }}
+            >
+              ♥
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       <div className="relative z-10 text-center px-6 max-w-2xl">
         <AnimatePresence mode="wait">
@@ -91,34 +122,78 @@ export default function EntrancePage() {
               transition={{ duration: 0.8 }}
               className="space-y-8"
             >
-              {/* Envelope */}
+              {/* Premium Envelope Design */}
               <motion.div
-                className="relative cursor-pointer group"
+                className="relative cursor-pointer group mx-auto"
                 onClick={handleEnvelopeClick}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                style={{ width: '320px', height: '220px' }}
               >
-                <div className="w-64 h-48 mx-auto relative">
-                  {/* Envelope body */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-cream to-soft-rose rounded-lg shadow-2xl border-2 border-deep-rose/20" />
-                  
-                  {/* Envelope flap */}
-                  <motion.div
-                    className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-br from-deep-rose to-soft-rose origin-top"
+                {/* Envelope Body - Realistic 3D */}
+                <div className="absolute inset-0">
+                  {/* Back of envelope */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-cream to-soft-rose rounded-lg shadow-2xl border border-deep-rose/10" 
                     style={{
-                      clipPath: 'polygon(0 0, 50% 100%, 100% 0)',
-                      transformStyle: 'preserve-3d'
+                      boxShadow: '0 20px 60px rgba(224, 90, 106, 0.3), inset 0 1px 0 rgba(255,255,255,0.5)'
+                    }}
+                  />
+                  
+                  {/* Envelope flap - Animated opening */}
+                  <motion.div
+                    className="absolute top-0 left-0 right-0 origin-top"
+                    style={{
+                      height: '110px',
+                      background: 'linear-gradient(135deg, #E05A6A 0%, #F7C6CE 100%)',
+                      clipPath: 'polygon(0 0, 50% 70%, 100% 0)',
+                      transformStyle: 'preserve-3d',
+                      boxShadow: '0 4px 20px rgba(224, 90, 106, 0.4)'
                     }}
                     animate={{
                       rotateX: 0,
                     }}
+                    whileHover={{
+                      rotateX: -15,
+                    }}
+                    transition={{ duration: 0.3 }}
                   />
                   
-                  {/* Seal */}
-                  <div className="absolute top-16 left-1/2 -translate-x-1/2 w-12 h-12 bg-warm-gold rounded-full shadow-lg flex items-center justify-center">
-                    <span className="text-deep-rose text-2xl">♥</span>
-                  </div>
+                  {/* Wax seal - Premium detail */}
+                  <motion.div
+                    className="absolute top-20 left-1/2 -translate-x-1/2 z-10"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <div className="relative w-16 h-16">
+                      {/* Wax seal base */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-warm-gold to-amber-600 rounded-full shadow-lg"
+                        style={{
+                          boxShadow: '0 4px 15px rgba(255, 208, 138, 0.6), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                        }}
+                      />
+                      {/* Wax texture */}
+                      <div className="absolute inset-1 bg-gradient-to-br from-amber-400 to-warm-gold rounded-full opacity-50" />
+                      {/* Heart emboss */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-deep-rose text-2xl font-bold drop-shadow-sm">♥</span>
+                      </div>
+                      {/* Shine effect */}
+                      <div className="absolute top-2 left-2 w-6 h-6 bg-white/30 rounded-full blur-sm" />
+                    </div>
+                  </motion.div>
+                  
+                  {/* Paper edge detail */}
+                  <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-deep-rose/5 to-transparent" />
                 </div>
+
+                {/* Glow effect on hover */}
+                <motion.div
+                  className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{
+                    background: 'radial-gradient(circle at center, rgba(224, 90, 106, 0.2) 0%, transparent 70%)',
+                    filter: 'blur(20px)'
+                  }}
+                />
 
                 {/* Pulse animation */}
                 <motion.div
@@ -136,29 +211,41 @@ export default function EntrancePage() {
                 />
               </motion.div>
 
-              {/* Name */}
+              {/* Name with elegant typography */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="space-y-2"
+                className="space-y-3"
               >
-                <p className="font-script text-3xl text-deep-rose">
-                  For {userNickname || 'You'}
-                </p>
-                <p className="text-sm text-deep-rose/60 font-sans">
+                <div className="relative inline-block">
+                  <p className="font-script text-4xl text-deep-rose relative z-10">
+                    For {userNickname || 'You'}
+                  </p>
+                  {/* Underline decoration */}
+                  <motion.div
+                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-deep-rose/40 to-transparent"
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ delay: 0.8, duration: 0.6 }}
+                  />
+                </div>
+                <p className="text-sm text-deep-rose/60 font-sans italic">
                   from someone who thinks about you too much
                 </p>
               </motion.div>
 
-              {/* Tap hint */}
-              <motion.p
-                className="text-xs text-deep-rose/40 font-sans"
+              {/* Tap hint with icon */}
+              <motion.div
+                className="flex items-center justify-center gap-2"
                 animate={{ opacity: [0.4, 1, 0.4] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                tap to open
-              </motion.p>
+                <svg className="w-5 h-5 text-deep-rose/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                </svg>
+                <p className="text-xs text-deep-rose/40 font-sans">tap to open</p>
+              </motion.div>
             </motion.div>
           ) : (
             <motion.div
@@ -368,21 +455,21 @@ export default function EntrancePage() {
                 )}
 
                 {/* Floating sparkles */}
-                {showMessage && (
+                {showMessage && mounted && (
                   <>
-                    {[...Array(6)].map((_, i) => (
+                    {sparklePositions.map((sparkle, i) => (
                       <motion.div
                         key={i}
                         className="absolute text-deep-rose/20 text-sm"
                         initial={{ 
-                          x: Math.random() * 100 - 50,
-                          y: Math.random() * 100 - 50,
+                          x: sparkle.initialX,
+                          y: sparkle.initialY,
                           opacity: 0,
                           scale: 0
                         }}
                         animate={{ 
-                          x: Math.random() * 200 - 100,
-                          y: Math.random() * 200 - 100,
+                          x: sparkle.finalX,
+                          y: sparkle.finalY,
                           opacity: [0, 1, 0],
                           scale: [0, 1, 0],
                           rotate: 360
@@ -394,8 +481,8 @@ export default function EntrancePage() {
                           repeatDelay: 2
                         }}
                         style={{
-                          left: `${20 + Math.random() * 60}%`,
-                          top: `${20 + Math.random() * 60}%`
+                          left: `${sparkle.left}%`,
+                          top: `${sparkle.top}%`
                         }}
                       >
                         ✨
