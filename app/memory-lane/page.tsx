@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function MemoryLanePage() {
@@ -11,6 +11,7 @@ export default function MemoryLanePage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [direction, setDirection] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   // Check authentication
   useEffect(() => {
@@ -22,6 +23,16 @@ export default function MemoryLanePage() {
 
   useEffect(() => {
     loadMemories();
+  }, []);
+
+  // Try to play audio when component mounts
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(err => {
+        console.log('Autoplay prevented:', err);
+        // Browser blocked autoplay - will play when user interacts
+      });
+    }
   }, []);
 
   // Keyboard navigation
@@ -96,6 +107,15 @@ export default function MemoryLanePage() {
 
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-cream via-soft-rose/10 to-warm-gold/20 flex items-center justify-center p-4 md:p-6 overflow-hidden fixed inset-0">
+      {/* Background Music */}
+      <audio
+        ref={audioRef}
+        src="/memory-lane-music.mp3"
+        loop
+        autoPlay
+        className="hidden"
+      />
+      
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
